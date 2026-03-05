@@ -69,6 +69,36 @@ def export_json():
     print(f"Exported {len(properties)} properties → {out} ({size_kb:.1f} KB)")
 
 
+LOCALSTORAGE_EXPORT_FN = """\
+        // Export ratings (static: reads from localStorage)
+        function exportRatings() {
+            const ratings = JSON.parse(localStorage.getItem('propertyRatings') || '{}');
+            const count = Object.keys(ratings).length;
+            if (count === 0) { alert('No ratings to export.'); return; }
+            downloadJSON(ratings, 'my-ratings.json');
+            document.getElementById('ratings-info').textContent = `Exported ${count} rating${count !== 1 ? 's' : ''}`;
+        }"""
+
+LOCALSTORAGE_IMPORT_FN = """\
+        // Import ratings (static: writes to localStorage)
+        async function importRatings(file) {
+            if (!file) return;
+            try {
+                const ratings = JSON.parse(await file.text());
+                const saved = JSON.parse(localStorage.getItem('propertyRatings') || '{}');
+                Object.assign(saved, ratings);
+                localStorage.setItem('propertyRatings', JSON.stringify(saved));
+                allProperties.forEach(p => {
+                    if (saved[String(p.id)]) p.user_rating = saved[String(p.id)];
+                });
+                const count = Object.keys(ratings).length;
+                document.getElementById('ratings-info').textContent = `Imported ${count} rating${count !== 1 ? 's' : ''}`;
+                performSearch();
+            } catch (e) {
+                alert('Import failed: ' + e.message);
+            }
+        }"""
+
 LOCALSTORAGE_RATE_FN = """\
         // Rating function (localStorage-based for static GitHub Pages)
         function rateProperty(propertyId, rating, buttonElement) {
@@ -121,6 +151,26 @@ def build_html():
     html = re.sub(
         r"        // Rating function\n        async function rateProperty.*?(?=\n[ \t]*\n        // Modal functions)",
         LOCALSTORAGE_RATE_FN,
+        html,
+        flags=re.DOTALL,
+    )
+
+    # ------------------------------------------------------------------ #
+    # 3b. Replace exportRatings with localStorage version                 #
+    # ------------------------------------------------------------------ #
+    html = re.sub(
+        r"        // Export ratings \(Flask:.*?\n        async function exportRatings\(\).*?\n        \}",
+        LOCALSTORAGE_EXPORT_FN,
+        html,
+        flags=re.DOTALL,
+    )
+
+    # ------------------------------------------------------------------ #
+    # 3c. Replace importRatings with localStorage version                 #
+    # ------------------------------------------------------------------ #
+    html = re.sub(
+        r"        // Import ratings \(Flask:.*?\n        async function importRatings\(file\).*?\n        \}",
+        LOCALSTORAGE_IMPORT_FN,
         html,
         flags=re.DOTALL,
     )

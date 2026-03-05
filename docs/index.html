@@ -137,6 +137,38 @@
         .clear-filters-btn:hover {
             background: #d32f2f;
         }
+
+        .ratings-toolbar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 10px 0 0 0;
+            border-top: 1px solid #e0e0e0;
+            margin-top: 12px;
+        }
+
+        .ratings-toolbar span {
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .ratings-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .ratings-btn.export { background: #7E57C2; color: white; }
+        .ratings-btn.export:hover { background: #5E35B1; }
+        .ratings-btn.import { background: #26A69A; color: white; }
+        .ratings-btn.import:hover { background: #00897B; }
         
         .active-filters {
             display: flex;
@@ -775,6 +807,14 @@
             </div>
             
             <div class="active-filters" id="active-filters"></div>
+
+            <div class="ratings-toolbar">
+                <span>Ratings</span>
+                <button class="ratings-btn export" onclick="exportRatings()" title="Download your ratings as a JSON file">📤 Export Ratings</button>
+                <button class="ratings-btn import" onclick="document.getElementById('import-file').click()" title="Load ratings from a previously exported file">📥 Import Ratings</button>
+                <input type="file" id="import-file" accept=".json" style="display:none" onchange="importRatings(this.files[0]); this.value='';">
+                <span id="ratings-info" style="font-size:12px;color:#888;"></span>
+            </div>
         </div>
         
         <div id="results">
@@ -1439,6 +1479,43 @@
         document.getElementById('min-beds').addEventListener('change', performSearch);
         document.getElementById('min-baths').addEventListener('change', performSearch);
         
+        // Download helper
+        function downloadJSON(data, filename) {
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = filename;
+            a.click();
+        }
+
+        // Export ratings (static: reads from localStorage)
+        function exportRatings() {
+            const ratings = JSON.parse(localStorage.getItem('propertyRatings') || '{}');
+            const count = Object.keys(ratings).length;
+            if (count === 0) { alert('No ratings to export.'); return; }
+            downloadJSON(ratings, 'my-ratings.json');
+            document.getElementById('ratings-info').textContent = `Exported ${count} rating${count !== 1 ? 's' : ''}`;
+        }
+
+        // Import ratings (static: writes to localStorage)
+        async function importRatings(file) {
+            if (!file) return;
+            try {
+                const ratings = JSON.parse(await file.text());
+                const saved = JSON.parse(localStorage.getItem('propertyRatings') || '{}');
+                Object.assign(saved, ratings);
+                localStorage.setItem('propertyRatings', JSON.stringify(saved));
+                allProperties.forEach(p => {
+                    if (saved[String(p.id)]) p.user_rating = saved[String(p.id)];
+                });
+                const count = Object.keys(ratings).length;
+                document.getElementById('ratings-info').textContent = `Imported ${count} rating${count !== 1 ? 's' : ''}`;
+                performSearch();
+            } catch (e) {
+                alert('Import failed: ' + e.message);
+            }
+        }
+
         // Rating function (localStorage-based for static GitHub Pages)
         function rateProperty(propertyId, rating, buttonElement) {
             const card = buttonElement.closest('.property-card');

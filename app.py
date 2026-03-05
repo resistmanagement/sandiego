@@ -206,6 +206,46 @@ def serve_photo(filename):
     return send_from_directory(PHOTOS_DIR, filename)
 
 
+@app.route('/api/ratings')
+def get_ratings():
+    """Export all user ratings as {id: rating} JSON."""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT id, user_rating FROM auction_properties WHERE user_rating IS NOT NULL"
+    )
+    ratings = {str(row['id']): row['user_rating'] for row in cur.fetchall()}
+    cur.close()
+    conn.close()
+    return jsonify(ratings)
+
+
+@app.route('/api/ratings', methods=['POST'])
+def import_ratings():
+    """Bulk-import ratings from {id: rating} JSON."""
+    try:
+        data = request.get_json()
+        if not isinstance(data, dict):
+            return jsonify({'error': 'Expected object'}), 400
+        conn = get_db_connection()
+        cur = conn.cursor()
+        count = 0
+        for prop_id, rating in data.items():
+            if rating not in ('thumbs_up', 'thumbs_down', None):
+                continue
+            cur.execute(
+                "UPDATE auction_properties SET user_rating = %s WHERE id = %s",
+                (rating, int(prop_id)),
+            )
+            count += cur.rowcount
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({'imported': count})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/api/property/<int:property_id>/rating', methods=['POST'])
 def update_rating(property_id):
     """Update the rating for a property"""
