@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>San Diego Property Tax Auction - March 2026</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=thumb_down,thumb_up" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .filters-container {
+            margin-bottom: 25px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .filter-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .search-box {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 15px;
+            transition: border-color 0.2s;
+        }
+        
+        .search-box input:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 180px;
+        }
+        
+        .filter-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+        
+        .filter-group select,
+        .filter-group input {
+            padding: 12px 16px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 15px;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .filter-group select[multiple] {
+            height: auto;
+            min-height: 44px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .filter-group select[multiple] option {
+            padding: 6px;
+        }
+        
+        .filter-group select[multiple] option:checked {
+            background: #2196F3;
+            color: white;
+        }
+        
+        .filter-group input {
+            cursor: text;
+        }
+        
+        .clear-filters-btn {
+            padding: 12px 20px;
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            align-self: flex-end;
+        }
+        
+        .clear-filters-btn:hover {
+            background: #d32f2f;
+        }
+        
+        .active-filters {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .filter-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: #2196F3;
+            color: white;
+            border-radius: 16px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        .filter-tag .remove {
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+        
+        .stat {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .properties-grid {
+            display: grid;
+            gap: 20px;
+        }
+        
+        .property-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            transition: box-shadow 0.2s;
+            background: white;
+        }
+        
+        .property-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .property-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+            gap: 8px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            flex-shrink: 0;
+        }
+        
+        .property-id {
+            font-size: 14px;
+            font-weight: bold;
+            color: #2196F3;
+            background: #E3F2FD;
+            padding: 4px 10px;
+            border-radius: 4px;
+        }
+        
+        .property-status {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-upcoming {
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+        
+        .status-canceled {
+            background: #FFEBEE;
+            color: #C62828;
+        }
+
+        .status-removed {
+            background: #F5F5F5;
+            color: #9E9E9E;
+        }
+        
+        .status-sold {
+            background: #FFF3E0;
+            color: #E65100;
+        }
+        
+        .property-address {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .property-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 15px;
+        }
+        
+        .detail-item {
+            font-size: 13px;
+        }
+        
+        .detail-label {
+            color: #666;
+            font-weight: 500;
+            display: block;
+        }
+        
+        .detail-value {
+            color: #333;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+        
+        .price {
+            font-size: 22px;
+            font-weight: bold;
+            color: #4CAF50;
+            margin: 10px 0;
+        }
+
+        .price-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 10px 0;
+        }
+
+        .price-row .price {
+            margin: 0;
+        }
+
+        .ratio-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .ratio-great  { background: #C8E6C9; color: #1B5E20; }
+        .ratio-good   { background: #DCEDC8; color: #33691E; }
+        .ratio-ok     { background: #FFF9C4; color: #F57F17; }
+        .ratio-low    { background: #FFE0B2; color: #E65100; }
+        .ratio-bad    { background: #FFCDD2; color: #B71C1C; }
+        
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        
+        .redfin-link {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 16px;
+            background: #C82506;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        
+        .redfin-link:hover {
+            background: #A01F05;
+        }
+        
+        .map-link {
+            display: inline-block;
+            margin-top: 10px;
+            margin-left: 10px;
+            padding: 8px 16px;
+            background: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        
+        .map-link:hover {
+            background: #45a049;
+        }
+        
+        .street-address {
+            color: #555;
+            font-size: 14px;
+            margin-bottom: 5px;
+            font-style: italic;
+        }
+        
+        .photo-count {
+            display: inline-block;
+            margin-left: 10px;
+            padding: 4px 8px;
+            background: #FFF3E0;
+            color: #E65100;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .view-photos-btn {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 16px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .view-photos-btn:hover {
+            background: #1976D2;
+        }
+        
+        .rating-btn {
+            padding: 3px;
+            border: none;
+            background: none;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: color 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ccc;
+        }
+
+        .rating-btn .material-symbols-outlined {
+            font-size: 22px;
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+            transition: font-variation-settings 0.15s;
+        }
+
+        .rating-btn:hover .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .rating-btn.active-thumbs-up {
+            color: #4CAF50;
+        }
+
+        .rating-btn.active-thumbs-up .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .rating-btn.active-thumbs-down {
+            color: #f44336;
+        }
+
+        .rating-btn.active-thumbs-down .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .rating-btn:hover:not(.active-thumbs-up):not(.active-thumbs-down) {
+            color: #888;
+        }
+
+
+        /* Modal/Dialog Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-content {
+            position: relative;
+            margin: auto;
+            padding: 0;
+            width: 90%;
+            max-width: 1200px;
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-header {
+            width: 100%;
+            padding: 20px;
+            text-align: center;
+            color: white;
+        }
+        
+        .modal-header h2 {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+        
+        .modal-header p {
+            font-size: 14px;
+            color: #ccc;
+        }
+        
+        .close {
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            color: white;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1001;
+            transition: color 0.2s;
+        }
+        
+        .close:hover,
+        .close:focus {
+            color: #bbb;
+        }
+        
+        /* Carousel Styles */
+        .carousel-container {
+            position: relative;
+            width: 100%;
+            max-width: 1000px;
+            height: 70vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .carousel-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+        
+        .carousel-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(255, 255, 255, 0.8);
+            color: #333;
+            border: none;
+            font-size: 30px;
+            padding: 15px 20px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+            z-index: 1001;
+        }
+        
+        .carousel-btn:hover {
+            background-color: rgba(255, 255, 255, 1);
+        }
+        
+        .carousel-btn.prev {
+            left: 20px;
+        }
+        
+        .carousel-btn.next {
+            right: 20px;
+        }
+        
+        .carousel-counter {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        
+        .no-photos-message {
+            color: white;
+            font-size: 18px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏠 San Diego Property Tax Auction</h1>
+        <div class="subtitle">March 2026 • Data as of March 05, 2026 • <span id="total-properties">-</span> Properties</div>
+        
+        <div class="stats" id="stats">
+            <div class="stat">
+                <div class="stat-value" id="total-count">-</div>
+                <div class="stat-label">Showing</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="upcoming-count">-</div>
+                <div class="stat-label">Upcoming</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="avg-bid">-</div>
+                <div class="stat-label">Avg Bid</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="thumbs-up-count">-</div>
+                <div class="stat-label">👍 Liked</div>
+            </div>
+        </div>
+        
+        <div class="filters-container">
+            <div class="filter-row">
+                <div class="search-box">
+                    <div class="filter-label">Text Search</div>
+                    <input 
+                        type="text" 
+                        id="search-input" 
+                        placeholder="Search by item #, address, city, APN, or assessee..."
+                    >
+                </div>
+            </div>
+            
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label class="filter-label" for="status-filter">Status</label>
+                    <select id="status-filter">
+                        <option value="">All Status</option>
+                        <option value="Upcoming">Upcoming</option>
+                        <option value="Canceled">Canceled</option>
+                        <option value="Removed">Removed</option>
+                        <option value="Sold">Sold</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label" for="property-type-filter">Property Type</label>
+                    <select id="property-type-filter">
+                        <option value="">All Types</option>
+                        <option value="Improved Property">Improved Property</option>
+                        <option value="Unimproved Property">Unimproved Property</option>
+                        <option value="Timeshare Property">Timeshare Property</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label" for="redfin-type-filter">Redfin Type</label>
+                    <select id="redfin-type-filter">
+                        <option value="">All Types</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label" for="city-filter">City (Multi-select)</label>
+                    <select id="city-filter" multiple size="1" style="height: 44px;">
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label" for="rating-filter">Rating</label>
+                    <select id="rating-filter">
+                        <option value="">All Ratings</option>
+                        <option value="thumbs_up">👍 Thumbs Up</option>
+                        <option value="thumbs_down">👎 Thumbs Down</option>
+                        <option value="not_rated">⭕ Not Rated</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label class="filter-label" for="min-bid">Min Bid ($)</label>
+                    <input type="number" id="min-bid" placeholder="0" min="0" step="1000">
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label" for="max-bid">Max Bid ($)</label>
+                    <input type="number" id="max-bid" placeholder="Any" min="0" step="1000">
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label" for="min-assessed">Min Assessed ($)</label>
+                    <input type="number" id="min-assessed" placeholder="0" min="0" step="10000">
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label" for="max-assessed">Max Assessed ($)</label>
+                    <input type="number" id="max-assessed" placeholder="Any" min="0" step="10000">
+                </div>
+            </div>
+            
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label class="filter-label" for="min-sqft">Min Sqft</label>
+                    <input type="number" id="min-sqft" placeholder="0" min="0" step="100">
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label" for="max-sqft">Max Sqft</label>
+                    <input type="number" id="max-sqft" placeholder="Any" min="0" step="100">
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label" for="min-year">Min Year Built</label>
+                    <input type="number" id="min-year" placeholder="Any" min="1800" max="2026" step="1">
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label" for="max-year">Max Year Built</label>
+                    <input type="number" id="max-year" placeholder="Any" min="1800" max="2026" step="1">
+                </div>
+            </div>
+            
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label class="filter-label" for="min-redfin">Min Redfin Est ($)</label>
+                    <input type="number" id="min-redfin" placeholder="0" min="0" step="10000">
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label" for="max-redfin">Max Redfin Est ($)</label>
+                    <input type="number" id="max-redfin" placeholder="Any" min="0" step="10000">
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label" for="min-ratio">Min Est/Bid Ratio</label>
+                    <input type="number" id="min-ratio" placeholder="e.g. 1.5" min="0" step="0.1">
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label" for="max-ratio">Max Est/Bid Ratio</label>
+                    <input type="number" id="max-ratio" placeholder="Any" min="0" step="0.1">
+                </div>
+            </div>
+
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label class="filter-label" for="min-acres">Min Lot (acres)</label>
+                    <input type="number" id="min-acres" placeholder="0" min="0" step="0.1">
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label" for="max-acres">Max Lot (acres)</label>
+                    <input type="number" id="max-acres" placeholder="Any" min="0" step="0.1">
+                </div>
+            </div>
+            
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label class="filter-label" for="min-beds">Min Beds</label>
+                    <select id="min-beds">
+                        <option value="">Any</option>
+                        <option value="1">1+</option>
+                        <option value="2">2+</option>
+                        <option value="3">3+</option>
+                        <option value="4">4+</option>
+                        <option value="5">5+</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label" for="min-baths">Min Baths</label>
+                    <select id="min-baths">
+                        <option value="">Any</option>
+                        <option value="1">1+</option>
+                        <option value="2">2+</option>
+                        <option value="3">3+</option>
+                    </select>
+                </div>
+                
+                <div style="flex: 1"></div>
+                <button class="clear-filters-btn" onclick="clearAllFilters()">Clear All</button>
+            </div>
+            
+            <div class="active-filters" id="active-filters"></div>
+        </div>
+        
+        <div id="results">
+            <div class="loading">Loading properties...</div>
+        </div>
+    </div>
+    
+    <!-- Photo Viewer Modal -->
+    <div id="photoModal" class="modal">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-property-id"></h2>
+                <p id="modal-property-address"></p>
+            </div>
+            <div class="carousel-container" id="carousel-container">
+                <button class="carousel-btn prev" onclick="changePhoto(-1)">&#10094;</button>
+                <img id="carousel-image" class="carousel-image" src="" alt="Property photo">
+                <button class="carousel-btn next" onclick="changePhoto(1)">&#10095;</button>
+                <div class="carousel-counter">
+                    <span id="current-photo">1</span> / <span id="total-photos">1</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let allProperties = [];
+        let currentPhotos = [];
+        let currentPhotoIndex = 0;
+        let currentPropertyData = null;
+        let uniqueCities = new Set();
+        let uniqueRedfinTypes = new Set();
+        
+        // Fetch properties on page load
+        async function loadProperties() {
+            try {
+                const response = await fetch('./data/properties.json');
+                allProperties = await response.json();
+                // Restore ratings from localStorage
+                const _savedRatings = JSON.parse(localStorage.getItem('propertyRatings') || '{}');
+                allProperties.forEach(p => { p.user_rating = _savedRatings[String(p.id)] || null; });
+                document.getElementById('total-properties').textContent = allProperties.length;
+                
+                // Build unique city and redfin type lists
+                allProperties.forEach(prop => {
+                    if (prop.city) uniqueCities.add(prop.city);
+                    if (prop.redfin_property_type) uniqueRedfinTypes.add(prop.redfin_property_type);
+                });
+                
+                // Populate filter dropdowns
+                populateFilterDropdowns();
+                
+                // Restore saved filters from localStorage
+                restoreFilters();
+                
+                displayProperties(allProperties);
+                updateStats();
+                
+                // Apply filters if any were restored
+                performSearch();
+            } catch (error) {
+                document.getElementById('results').innerHTML = 
+                    '<div class="no-results">Error loading properties: ' + error.message + '</div>';
+            }
+        }
+        
+        // Populate dynamic filter dropdowns
+        function populateFilterDropdowns() {
+            // Populate cities (multi-select, no "All Cities" option)
+            const cityFilter = document.getElementById('city-filter');
+            Array.from(uniqueCities).sort().forEach(city => {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                cityFilter.appendChild(option);
+            });
+            
+            // Populate Redfin types
+            const redfinTypeFilter = document.getElementById('redfin-type-filter');
+            Array.from(uniqueRedfinTypes).sort().forEach(type => {
+                const option = document.createElement('option');
+                option.value = type;
+                option.textContent = type;
+                redfinTypeFilter.appendChild(option);
+            });
+        }
+        
+        // Update statistics based on current filtered results
+        function updateStats(filteredProperties = null) {
+            const properties = filteredProperties || allProperties;
+            const total = properties.length;
+            const upcoming = properties.filter(p => p.status === 'Upcoming').length;
+            const bids = properties.filter(p => p.opening_bid).map(p => parseFloat(p.opening_bid));
+            const avgBid = bids.length > 0 ? bids.reduce((a, b) => a + b, 0) / bids.length : 0;
+            const thumbsUp = properties.filter(p => p.user_rating === 'thumbs_up').length;
+            
+            document.getElementById('total-count').textContent = total;
+            document.getElementById('upcoming-count').textContent = upcoming;
+            document.getElementById('avg-bid').textContent = '$' + avgBid.toLocaleString('en-US', {maximumFractionDigits: 0});
+            document.getElementById('thumbs-up-count').textContent = thumbsUp;
+        }
+        
+        // Display properties
+        function displayProperties(properties) {
+            const resultsDiv = document.getElementById('results');
+            
+            if (properties.length === 0) {
+                resultsDiv.innerHTML = '<div class="no-results">No properties found</div>';
+                return;
+            }
+            
+            const html = properties.map(prop => {
+                const statusClass = 'status-' + (prop.status || 'unknown').toLowerCase();
+                const photoCountHtml = prop.photo_count > 0 
+                    ? `<span class="photo-count">📷 ${prop.photo_count} photos</span>` 
+                    : '';
+                
+                // Create Google Maps link if we have coordinates or address
+                let mapLink = '';
+                if (prop.latitude && prop.longitude) {
+                    mapLink = `https://www.google.com/maps/search/?api=1&query=${prop.latitude},${prop.longitude}`;
+                } else if (prop.address) {
+                    const encodedAddress = encodeURIComponent(prop.address);
+                    mapLink = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+                }
+
+                // Redfin estimate / minimum bid ratio
+                const ratioVal = (prop.redfin_estimate && prop.opening_bid)
+                    ? parseFloat(prop.redfin_estimate) / parseFloat(prop.opening_bid)
+                    : null;
+                const ratioClass = ratioVal === null ? '' :
+                    ratioVal >= 3   ? 'ratio-great' :
+                    ratioVal >= 2   ? 'ratio-good'  :
+                    ratioVal >= 1.5 ? 'ratio-ok'    :
+                    ratioVal >= 1   ? 'ratio-low'   : 'ratio-bad';
+                const ratioBadge = ratioVal !== null
+                    ? `<span class="ratio-badge ${ratioClass}" title="Redfin Estimate ÷ Min Bid">${ratioVal.toFixed(2)}× est/bid</span>`
+                    : '';
+                
+                return `
+                    <div class="property-card">
+                        <div class="property-header">
+                            <div class="header-left">
+                                <span class="property-id">ID# ${prop.item_number}</span>
+                                <span class="property-status ${statusClass}">${prop.status || 'Unknown'}</span>
+                            </div>
+                            <div class="header-right">
+                                <button class="rating-btn ${prop.user_rating === 'thumbs_up' ? 'active-thumbs-up' : ''}"
+                                        onclick="rateProperty(${prop.id}, 'thumbs_up', this)"
+                                        title="Thumbs up">
+                                    <span class="material-symbols-outlined">thumb_up</span>
+                                </button>
+                                <button class="rating-btn ${prop.user_rating === 'thumbs_down' ? 'active-thumbs-down' : ''}"
+                                        onclick="rateProperty(${prop.id}, 'thumbs_down', this)"
+                                        title="Thumbs down">
+                                    <span class="material-symbols-outlined">thumb_down</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="property-address">${prop.address || 'No address'}</div>
+                        <div style="color: #666; font-size: 14px; margin-bottom: 8px;">
+                            ${prop.city || ''} ${prop.postal_code || ''}
+                        </div>
+                        
+                        <div class="price-row">
+                            <div class="price">
+                                ${prop.opening_bid ? '$' + parseFloat(prop.opening_bid).toLocaleString('en-US', {minimumFractionDigits: 2}) : 'No bid'}
+                            </div>
+                            ${ratioBadge}
+                        </div>
+                        
+                        <div class="property-details">
+                            <div class="detail-item">
+                                <span class="detail-label">APN</span>
+                                <div class="detail-value">${prop.apn || 'N/A'}</div>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Property Type</span>
+                                <div class="detail-value">${prop.property_type || 'N/A'}</div>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Assessed Value</span>
+                                <div class="detail-value">${prop.total_assessed_value ? '$' + parseFloat(prop.total_assessed_value).toLocaleString('en-US') : 'N/A'}</div>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Default Year</span>
+                                <div class="detail-value">${prop.default_year || 'N/A'}</div>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Assessee</span>
+                                <div class="detail-value">${prop.assessee || 'N/A'}</div>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Close Time</span>
+                                <div class="detail-value">${prop.close_time ? new Date(prop.close_time).toLocaleString() : 'N/A'}</div>
+                            </div>
+                            ${prop.bedrooms || prop.bathrooms ? `
+                            <div class="detail-item">
+                                <span class="detail-label">Bed/Bath</span>
+                                <div class="detail-value">${prop.bedrooms || '?'} bed / ${prop.bathrooms || '?'} bath</div>
+                            </div>
+                            ` : ''}
+                            ${prop.sqft ? `
+                            <div class="detail-item">
+                                <span class="detail-label">Square Footage</span>
+                                <div class="detail-value">${parseInt(prop.sqft).toLocaleString()} sqft</div>
+                            </div>
+                            ` : ''}
+                            ${prop.year_built ? `
+                            <div class="detail-item">
+                                <span class="detail-label">Year Built</span>
+                                <div class="detail-value">${prop.year_built}</div>
+                            </div>
+                            ` : ''}
+                            ${prop.redfin_estimate ? `
+                            <div class="detail-item">
+                                <span class="detail-label">Redfin Estimate</span>
+                                <div class="detail-value">$${parseFloat(prop.redfin_estimate).toLocaleString('en-US')}</div>
+                            </div>
+                            ` : ''}
+                            ${prop.lot_acres ? `
+                            <div class="detail-item">
+                                <span class="detail-label">Lot Size</span>
+                                <div class="detail-value">${parseFloat(prop.lot_acres).toFixed(2)} acres</div>
+                            </div>
+                            ` : ''}
+                        </div>
+                        
+                        <div style="margin-top: 10px;">
+                            ${prop.redfin_url ? `
+                                <a href="${prop.redfin_url}" target="_blank" class="redfin-link">View on Redfin</a>
+                                ${photoCountHtml}
+                            ` : ''}
+                            ${mapLink ? `
+                                <a href="${mapLink}" target="_blank" class="map-link">🗺️ View Map</a>
+                            ` : ''}
+                        </div>
+                        
+                    </div>
+                `;
+            }).join('');
+            
+            resultsDiv.innerHTML = '<div class="properties-grid">' + html + '</div>';
+        }
+        
+        // Search and filter functionality
+        function performSearch() {
+            const filters = getActiveFilters();
+            let filtered = allProperties;
+            
+            // Apply text search (only searches text fields, not categorical)
+            if (filters.searchTerm) {
+                filtered = filtered.filter(prop => {
+                    const searchWords = filters.searchTerm.split(/\s+/);
+                    return searchWords.some(word => {
+                        return (
+                            (prop.item_number && prop.item_number.toLowerCase().includes(word)) ||
+                            (prop.address && prop.address.toLowerCase().includes(word)) ||
+                            (prop.city && prop.city.toLowerCase().includes(word)) ||
+                            (prop.assessee && prop.assessee.toLowerCase().includes(word)) ||
+                            (prop.apn && prop.apn.toLowerCase().includes(word))
+                        );
+                    });
+                });
+            }
+            
+            // Apply status filter (case-insensitive exact match)
+            if (filters.status) {
+                filtered = filtered.filter(prop => 
+                    prop.status && prop.status.toLowerCase() === filters.status.toLowerCase()
+                );
+            }
+            
+            // Apply property type filter (case-insensitive exact match)
+            if (filters.propertyType) {
+                filtered = filtered.filter(prop => 
+                    prop.property_type && prop.property_type.toLowerCase() === filters.propertyType.toLowerCase()
+                );
+            }
+            
+            // Apply Redfin type filter (case-insensitive exact match)
+            if (filters.redfinType) {
+                filtered = filtered.filter(prop => 
+                    prop.redfin_property_type && prop.redfin_property_type.toLowerCase() === filters.redfinType.toLowerCase()
+                );
+            }
+            
+            // Apply city filter (case-insensitive, matches ANY selected city)
+            if (filters.cities && filters.cities.length > 0) {
+                const lowerCities = filters.cities.map(c => c.toLowerCase());
+                filtered = filtered.filter(prop => 
+                    prop.city && lowerCities.includes(prop.city.toLowerCase())
+                );
+            }
+            
+            // Apply rating filter
+            if (filters.rating) {
+                if (filters.rating === 'not_rated') {
+                    filtered = filtered.filter(prop => !prop.user_rating || prop.user_rating === '');
+                } else {
+                    filtered = filtered.filter(prop => prop.user_rating === filters.rating);
+                }
+            }
+            
+            // Apply price range filters
+            if (filters.minBid) {
+                filtered = filtered.filter(prop => {
+                    const bid = parseFloat(prop.opening_bid);
+                    return !isNaN(bid) && bid >= filters.minBid;
+                });
+            }
+            
+            if (filters.maxBid) {
+                filtered = filtered.filter(prop => {
+                    const bid = parseFloat(prop.opening_bid);
+                    return !isNaN(bid) && bid <= filters.maxBid;
+                });
+            }
+            
+            // Apply bedroom filter
+            if (filters.minBeds) {
+                filtered = filtered.filter(prop => {
+                    const beds = parseInt(prop.bedrooms);
+                    return !isNaN(beds) && beds >= filters.minBeds;
+                });
+            }
+            
+            // Apply bathroom filter
+            if (filters.minBaths) {
+                filtered = filtered.filter(prop => {
+                    const baths = parseFloat(prop.bathrooms);
+                    return !isNaN(baths) && baths >= filters.minBaths;
+                });
+            }
+            
+            // Apply assessed value range filters
+            if (filters.minAssessed) {
+                filtered = filtered.filter(prop => {
+                    const assessed = parseFloat(prop.total_assessed_value);
+                    return !isNaN(assessed) && assessed >= filters.minAssessed;
+                });
+            }
+            
+            if (filters.maxAssessed) {
+                filtered = filtered.filter(prop => {
+                    const assessed = parseFloat(prop.total_assessed_value);
+                    return !isNaN(assessed) && assessed <= filters.maxAssessed;
+                });
+            }
+            
+            // Apply square footage range filters
+            if (filters.minSqft) {
+                filtered = filtered.filter(prop => {
+                    const sqft = parseInt(prop.sqft);
+                    return !isNaN(sqft) && sqft >= filters.minSqft;
+                });
+            }
+            
+            if (filters.maxSqft) {
+                filtered = filtered.filter(prop => {
+                    const sqft = parseInt(prop.sqft);
+                    return !isNaN(sqft) && sqft <= filters.maxSqft;
+                });
+            }
+            
+            // Apply year built range filters
+            if (filters.minYear) {
+                filtered = filtered.filter(prop => {
+                    const year = parseInt(prop.year_built);
+                    return !isNaN(year) && year >= filters.minYear;
+                });
+            }
+            
+            if (filters.maxYear) {
+                filtered = filtered.filter(prop => {
+                    const year = parseInt(prop.year_built);
+                    return !isNaN(year) && year <= filters.maxYear;
+                });
+            }
+            
+            // Apply Redfin estimate range filters
+            if (filters.minRedfin) {
+                filtered = filtered.filter(prop => {
+                    const estimate = parseFloat(prop.redfin_estimate);
+                    return !isNaN(estimate) && estimate >= filters.minRedfin;
+                });
+            }
+            
+            if (filters.maxRedfin) {
+                filtered = filtered.filter(prop => {
+                    const estimate = parseFloat(prop.redfin_estimate);
+                    return !isNaN(estimate) && estimate <= filters.maxRedfin;
+                });
+            }
+
+            // Apply Redfin estimate / min bid ratio filters
+            if (filters.minRatio) {
+                filtered = filtered.filter(prop => {
+                    if (!prop.redfin_estimate || !prop.opening_bid) return false;
+                    const ratio = parseFloat(prop.redfin_estimate) / parseFloat(prop.opening_bid);
+                    return !isNaN(ratio) && ratio >= filters.minRatio;
+                });
+            }
+
+            if (filters.maxRatio) {
+                filtered = filtered.filter(prop => {
+                    if (!prop.redfin_estimate || !prop.opening_bid) return false;
+                    const ratio = parseFloat(prop.redfin_estimate) / parseFloat(prop.opening_bid);
+                    return !isNaN(ratio) && ratio <= filters.maxRatio;
+                });
+            }
+            
+            // Apply lot size (acres) range filters
+            if (filters.minAcres) {
+                filtered = filtered.filter(prop => {
+                    const acres = parseFloat(prop.lot_acres);
+                    return !isNaN(acres) && acres >= filters.minAcres;
+                });
+            }
+            
+            if (filters.maxAcres) {
+                filtered = filtered.filter(prop => {
+                    const acres = parseFloat(prop.lot_acres);
+                    return !isNaN(acres) && acres <= filters.maxAcres;
+                });
+            }
+            
+            displayProperties(filtered);
+            displayActiveFilters(filters);
+            updateStats(filtered);  // Update stats based on filtered results
+            
+            // Save filters to localStorage
+            saveFilters();
+        }
+        
+        // Get all active filters
+        function getActiveFilters() {
+            const citySelect = document.getElementById('city-filter');
+            const selectedCities = Array.from(citySelect.selectedOptions).map(opt => opt.value);
+            
+            return {
+                searchTerm: document.getElementById('search-input').value.toLowerCase().trim(),
+                status: document.getElementById('status-filter').value,
+                propertyType: document.getElementById('property-type-filter').value,
+                redfinType: document.getElementById('redfin-type-filter').value,
+                cities: selectedCities,
+                rating: document.getElementById('rating-filter').value,
+                minBid: parseFloat(document.getElementById('min-bid').value) || null,
+                maxBid: parseFloat(document.getElementById('max-bid').value) || null,
+                minAssessed: parseFloat(document.getElementById('min-assessed').value) || null,
+                maxAssessed: parseFloat(document.getElementById('max-assessed').value) || null,
+                minSqft: parseInt(document.getElementById('min-sqft').value) || null,
+                maxSqft: parseInt(document.getElementById('max-sqft').value) || null,
+                minYear: parseInt(document.getElementById('min-year').value) || null,
+                maxYear: parseInt(document.getElementById('max-year').value) || null,
+                minRedfin: parseFloat(document.getElementById('min-redfin').value) || null,
+                maxRedfin: parseFloat(document.getElementById('max-redfin').value) || null,
+                minRatio: parseFloat(document.getElementById('min-ratio').value) || null,
+                maxRatio: parseFloat(document.getElementById('max-ratio').value) || null,
+                minAcres: parseFloat(document.getElementById('min-acres').value) || null,
+                maxAcres: parseFloat(document.getElementById('max-acres').value) || null,
+                minBeds: parseInt(document.getElementById('min-beds').value) || null,
+                minBaths: parseFloat(document.getElementById('min-baths').value) || null
+            };
+        }
+        
+        // Display active filters as tags
+        function displayActiveFilters(filters) {
+            const container = document.getElementById('active-filters');
+            container.innerHTML = '';
+            
+            const filterDisplay = [];
+            
+            if (filters.searchTerm) filterDisplay.push(['Search', filters.searchTerm, 'search-input']);
+            if (filters.status) filterDisplay.push(['Status', filters.status, 'status-filter']);
+            if (filters.propertyType) filterDisplay.push(['Type', filters.propertyType, 'property-type-filter']);
+            if (filters.redfinType) filterDisplay.push(['Redfin', filters.redfinType, 'redfin-type-filter']);
+            if (filters.cities && filters.cities.length > 0) {
+                filterDisplay.push(['Cities', filters.cities.join(', '), 'city-filter']);
+            }
+            if (filters.rating) {
+                const ratingLabels = {
+                    'thumbs_up': '👍 Thumbs Up',
+                    'thumbs_down': '👎 Thumbs Down',
+                    'not_rated': '⭕ Not Rated'
+                };
+                filterDisplay.push(['Rating', ratingLabels[filters.rating], 'rating-filter']);
+            }
+            if (filters.minBid) filterDisplay.push(['Min Bid', '$' + filters.minBid.toLocaleString(), 'min-bid']);
+            if (filters.maxBid) filterDisplay.push(['Max Bid', '$' + filters.maxBid.toLocaleString(), 'max-bid']);
+            if (filters.minAssessed) filterDisplay.push(['Min Assessed', '$' + filters.minAssessed.toLocaleString(), 'min-assessed']);
+            if (filters.maxAssessed) filterDisplay.push(['Max Assessed', '$' + filters.maxAssessed.toLocaleString(), 'max-assessed']);
+            if (filters.minSqft) filterDisplay.push(['Min Sqft', filters.minSqft.toLocaleString(), 'min-sqft']);
+            if (filters.maxSqft) filterDisplay.push(['Max Sqft', filters.maxSqft.toLocaleString(), 'max-sqft']);
+            if (filters.minYear) filterDisplay.push(['Min Year', filters.minYear, 'min-year']);
+            if (filters.maxYear) filterDisplay.push(['Max Year', filters.maxYear, 'max-year']);
+            if (filters.minRedfin) filterDisplay.push(['Min Redfin', '$' + filters.minRedfin.toLocaleString(), 'min-redfin']);
+            if (filters.maxRedfin) filterDisplay.push(['Max Redfin', '$' + filters.maxRedfin.toLocaleString(), 'max-redfin']);
+            if (filters.minRatio) filterDisplay.push(['Min Est/Bid', filters.minRatio + '×', 'min-ratio']);
+            if (filters.maxRatio) filterDisplay.push(['Max Est/Bid', filters.maxRatio + '×', 'max-ratio']);
+            if (filters.minAcres) filterDisplay.push(['Min Acres', filters.minAcres, 'min-acres']);
+            if (filters.maxAcres) filterDisplay.push(['Max Acres', filters.maxAcres, 'max-acres']);
+            if (filters.minBeds) filterDisplay.push(['Min Beds', filters.minBeds + '+', 'min-beds']);
+            if (filters.minBaths) filterDisplay.push(['Min Baths', filters.minBaths + '+', 'min-baths']);
+            
+            filterDisplay.forEach(([label, value, inputId]) => {
+                const tag = document.createElement('div');
+                tag.className = 'filter-tag';
+                tag.innerHTML = `<strong>${label}:</strong> ${value} <span class="remove" onclick="clearFilter('${inputId}')">×</span>`;
+                container.appendChild(tag);
+            });
+        }
+        
+        // Clear a specific filter
+        function clearFilter(inputId) {
+            const element = document.getElementById(inputId);
+            if (element.tagName === 'SELECT') {
+                if (element.multiple) {
+                    // Clear all selections in multi-select
+                    Array.from(element.options).forEach(opt => opt.selected = false);
+                } else {
+                    element.selectedIndex = 0;
+                }
+            } else {
+                element.value = '';
+            }
+            performSearch();
+        }
+        
+        // Clear all filters
+        function clearAllFilters() {
+            document.getElementById('search-input').value = '';
+            document.getElementById('status-filter').selectedIndex = 0;
+            document.getElementById('property-type-filter').selectedIndex = 0;
+            document.getElementById('redfin-type-filter').selectedIndex = 0;
+            document.getElementById('rating-filter').selectedIndex = 0;
+            
+            // Clear multi-select city filter
+            const cityFilter = document.getElementById('city-filter');
+            Array.from(cityFilter.options).forEach(opt => opt.selected = false);
+            
+            document.getElementById('min-bid').value = '';
+            document.getElementById('max-bid').value = '';
+            document.getElementById('min-assessed').value = '';
+            document.getElementById('max-assessed').value = '';
+            document.getElementById('min-sqft').value = '';
+            document.getElementById('max-sqft').value = '';
+            document.getElementById('min-year').value = '';
+            document.getElementById('max-year').value = '';
+            document.getElementById('min-redfin').value = '';
+            document.getElementById('max-redfin').value = '';
+            document.getElementById('min-ratio').value = '';
+            document.getElementById('max-ratio').value = '';
+            document.getElementById('min-acres').value = '';
+            document.getElementById('max-acres').value = '';
+            document.getElementById('min-beds').selectedIndex = 0;
+            document.getElementById('min-baths').selectedIndex = 0;
+            
+            // Clear localStorage
+            localStorage.removeItem('propertyFilters');
+            
+            performSearch();
+        }
+        
+        // Save filters to localStorage
+        function saveFilters() {
+            const filters = {
+                searchTerm: document.getElementById('search-input').value,
+                status: document.getElementById('status-filter').value,
+                propertyType: document.getElementById('property-type-filter').value,
+                redfinType: document.getElementById('redfin-type-filter').value,
+                cities: Array.from(document.getElementById('city-filter').selectedOptions).map(opt => opt.value),
+                rating: document.getElementById('rating-filter').value,
+                minBid: document.getElementById('min-bid').value,
+                maxBid: document.getElementById('max-bid').value,
+                minAssessed: document.getElementById('min-assessed').value,
+                maxAssessed: document.getElementById('max-assessed').value,
+                minSqft: document.getElementById('min-sqft').value,
+                maxSqft: document.getElementById('max-sqft').value,
+                minYear: document.getElementById('min-year').value,
+                maxYear: document.getElementById('max-year').value,
+                minRedfin: document.getElementById('min-redfin').value,
+                maxRedfin: document.getElementById('max-redfin').value,
+                minRatio: document.getElementById('min-ratio').value,
+                maxRatio: document.getElementById('max-ratio').value,
+                minAcres: document.getElementById('min-acres').value,
+                maxAcres: document.getElementById('max-acres').value,
+                minBeds: document.getElementById('min-beds').value,
+                minBaths: document.getElementById('min-baths').value
+            };
+            localStorage.setItem('propertyFilters', JSON.stringify(filters));
+        }
+        
+        // Restore filters from localStorage
+        function restoreFilters() {
+            const saved = localStorage.getItem('propertyFilters');
+            if (!saved) return;
+            
+            try {
+                const filters = JSON.parse(saved);
+                
+                if (filters.searchTerm) document.getElementById('search-input').value = filters.searchTerm;
+                if (filters.status) document.getElementById('status-filter').value = filters.status;
+                if (filters.propertyType) document.getElementById('property-type-filter').value = filters.propertyType;
+                if (filters.redfinType) document.getElementById('redfin-type-filter').value = filters.redfinType;
+                if (filters.rating) document.getElementById('rating-filter').value = filters.rating;
+                
+                // Restore multi-select cities (after dropdown is populated)
+                if (filters.cities && filters.cities.length > 0) {
+                    setTimeout(() => {
+                        const cityFilter = document.getElementById('city-filter');
+                        Array.from(cityFilter.options).forEach(opt => {
+                            opt.selected = filters.cities.includes(opt.value);
+                        });
+                    }, 100);
+                }
+                
+                if (filters.minBid) document.getElementById('min-bid').value = filters.minBid;
+                if (filters.maxBid) document.getElementById('max-bid').value = filters.maxBid;
+                if (filters.minAssessed) document.getElementById('min-assessed').value = filters.minAssessed;
+                if (filters.maxAssessed) document.getElementById('max-assessed').value = filters.maxAssessed;
+                if (filters.minSqft) document.getElementById('min-sqft').value = filters.minSqft;
+                if (filters.maxSqft) document.getElementById('max-sqft').value = filters.maxSqft;
+                if (filters.minYear) document.getElementById('min-year').value = filters.minYear;
+                if (filters.maxYear) document.getElementById('max-year').value = filters.maxYear;
+                if (filters.minRedfin) document.getElementById('min-redfin').value = filters.minRedfin;
+                if (filters.maxRedfin) document.getElementById('max-redfin').value = filters.maxRedfin;
+                if (filters.minRatio) document.getElementById('min-ratio').value = filters.minRatio;
+                if (filters.maxRatio) document.getElementById('max-ratio').value = filters.maxRatio;
+                if (filters.minAcres) document.getElementById('min-acres').value = filters.minAcres;
+                if (filters.maxAcres) document.getElementById('max-acres').value = filters.maxAcres;
+                if (filters.minBeds) document.getElementById('min-beds').value = filters.minBeds;
+                if (filters.minBaths) document.getElementById('min-baths').value = filters.minBaths;
+            } catch (e) {
+                console.error('Error restoring filters:', e);
+            }
+        }
+        
+        // Event listeners for all filters
+        document.getElementById('search-input').addEventListener('input', performSearch);
+        document.getElementById('status-filter').addEventListener('change', performSearch);
+        document.getElementById('property-type-filter').addEventListener('change', performSearch);
+        document.getElementById('redfin-type-filter').addEventListener('change', performSearch);
+        document.getElementById('city-filter').addEventListener('change', performSearch);
+        document.getElementById('rating-filter').addEventListener('change', performSearch);
+        document.getElementById('min-bid').addEventListener('input', performSearch);
+        document.getElementById('max-bid').addEventListener('input', performSearch);
+        document.getElementById('min-assessed').addEventListener('input', performSearch);
+        document.getElementById('max-assessed').addEventListener('input', performSearch);
+        document.getElementById('min-sqft').addEventListener('input', performSearch);
+        document.getElementById('max-sqft').addEventListener('input', performSearch);
+        document.getElementById('min-year').addEventListener('input', performSearch);
+        document.getElementById('max-year').addEventListener('input', performSearch);
+        document.getElementById('min-redfin').addEventListener('input', performSearch);
+        document.getElementById('max-redfin').addEventListener('input', performSearch);
+        document.getElementById('min-ratio').addEventListener('input', performSearch);
+        document.getElementById('max-ratio').addEventListener('input', performSearch);
+        document.getElementById('min-acres').addEventListener('input', performSearch);
+        document.getElementById('max-acres').addEventListener('input', performSearch);
+        document.getElementById('min-beds').addEventListener('change', performSearch);
+        document.getElementById('min-baths').addEventListener('change', performSearch);
+        
+        // Rating function (localStorage-based for static GitHub Pages)
+        function rateProperty(propertyId, rating, buttonElement) {
+            const card = buttonElement.closest('.property-card');
+            const buttons = card.querySelectorAll('.rating-btn');
+            const property = allProperties.find(p => p.id === propertyId);
+            const newRating = property?.user_rating === rating ? null : rating;
+
+            // Persist in localStorage
+            const saved = JSON.parse(localStorage.getItem('propertyRatings') || '{}');
+            if (newRating) { saved[String(propertyId)] = newRating; }
+            else { delete saved[String(propertyId)]; }
+            localStorage.setItem('propertyRatings', JSON.stringify(saved));
+
+            if (property) property.user_rating = newRating;
+            buttons.forEach(b => b.classList.remove('active-thumbs-up', 'active-thumbs-down'));
+            if (newRating === 'thumbs_up') buttonElement.classList.add('active-thumbs-up');
+            else if (newRating === 'thumbs_down') buttonElement.classList.add('active-thumbs-down');
+            performSearch();
+        }
+        
+        // Modal functions
+        async function openPhotoModal(propertyId, itemNumber, address) {
+            try {
+                // Fetch property details including images
+                const response = await fetch(`/api/property/${propertyId}`);
+                const data = await response.json();
+                
+                currentPropertyData = data.property;
+                currentPhotos = data.images.filter(img => img.image_type === 'photo');
+                
+                if (currentPhotos.length === 0) {
+                    alert('No photos available for this property');
+                    return;
+                }
+                
+                currentPhotoIndex = 0;
+                
+                // Update modal header
+                document.getElementById('modal-property-id').textContent = `ID# ${itemNumber}`;
+                document.getElementById('modal-property-address').textContent = address;
+                
+                // Show modal
+                document.getElementById('photoModal').style.display = 'block';
+                
+                // Display first photo
+                displayCurrentPhoto();
+                
+                // Prevent body scroll
+                document.body.style.overflow = 'hidden';
+            } catch (error) {
+                console.error('Error loading photos:', error);
+                alert('Error loading photos: ' + error.message);
+            }
+        }
+        
+        function closeModal() {
+            document.getElementById('photoModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+            currentPhotos = [];
+            currentPhotoIndex = 0;
+        }
+        
+        function changePhoto(direction) {
+            currentPhotoIndex += direction;
+            
+            // Wrap around
+            if (currentPhotoIndex < 0) {
+                currentPhotoIndex = currentPhotos.length - 1;
+            } else if (currentPhotoIndex >= currentPhotos.length) {
+                currentPhotoIndex = 0;
+            }
+            
+            displayCurrentPhoto();
+        }
+        
+        function displayCurrentPhoto() {
+            if (currentPhotos.length === 0) return;
+            
+            const photo = currentPhotos[currentPhotoIndex];
+            const img = document.getElementById('carousel-image');
+            
+            // Use local path for downloaded photos
+            const photoUrl = `/photos/${photo.image_url}`;
+            img.src = photoUrl;
+            img.alt = `Property photo ${currentPhotoIndex + 1}`;
+            
+            // Update counter
+            document.getElementById('current-photo').textContent = currentPhotoIndex + 1;
+            document.getElementById('total-photos').textContent = currentPhotos.length;
+        }
+        
+        // Keyboard navigation for carousel
+        document.addEventListener('keydown', function(e) {
+            const modal = document.getElementById('photoModal');
+            if (modal.style.display === 'block') {
+                if (e.key === 'ArrowLeft') {
+                    changePhoto(-1);
+                } else if (e.key === 'ArrowRight') {
+                    changePhoto(1);
+                } else if (e.key === 'Escape') {
+                    closeModal();
+                }
+            }
+        });
+        
+        // Close modal when clicking outside the image
+        document.getElementById('photoModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+        
+        // Load properties on page load
+        loadProperties();
+    </script>
+</body>
+</html>
