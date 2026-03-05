@@ -1630,6 +1630,50 @@
         // Shim for old exportRatings calls
         function exportRatings() { return exportData(); }
 
+        // Import data (static: writes to localStorage)
+        async function importData(file) {
+            if (!file) return;
+            try {
+                const data = JSON.parse(await file.text());
+                const ratings = data.ratings || (typeof data === 'object' && !data.savedFilters ? data : {});
+                const priorities = data.priorities || {};
+                const savedFilters = data.savedFilters || {};
+
+                // Merge ratings
+                const savedR = JSON.parse(localStorage.getItem('propertyRatings') || '{}');
+                Object.assign(savedR, ratings);
+                localStorage.setItem('propertyRatings', JSON.stringify(savedR));
+
+                // Merge priorities
+                const savedP = JSON.parse(localStorage.getItem('propertyPriorities') || '{}');
+                Object.assign(savedP, priorities);
+                localStorage.setItem('propertyPriorities', JSON.stringify(savedP));
+
+                // Merge saved filters
+                if (Object.keys(savedFilters).length > 0) {
+                    const existing = JSON.parse(localStorage.getItem('propertySavedFilters') || '{}');
+                    Object.assign(existing, savedFilters);
+                    localStorage.setItem('propertySavedFilters', JSON.stringify(existing));
+                    populateSavedFilterDropdown();
+                }
+
+                allProperties.forEach(p => {
+                    const id = String(p.id);
+                    if (savedR[id]) p.user_rating = savedR[id];
+                    if (savedP[id]) p.user_priority = savedP[id];
+                });
+                const rCount = Object.keys(ratings).length;
+                const pCount = Object.keys(priorities).length;
+                document.getElementById('ratings-info').textContent = `Imported ${rCount} rating${rCount !== 1 ? 's' : ''}, ${pCount} priorit${pCount !== 1 ? 'ies' : 'y'}`;
+                performSearch();
+            } catch (e) {
+                alert('Import failed: ' + e.message);
+            }
+        }
+
+        // Shim for old importRatings calls
+        async function importRatings(file) { return importData(file); }
+
         // ── Saved Filters ─────────────────────────────────────────────────────
         function populateSavedFilterDropdown() {
             const select = document.getElementById('saved-filter-select');
@@ -1717,10 +1761,25 @@
             populateSavedFilterDropdown();
         }
 
-        // Export ratings (Flask: reads from DB via /api/ratings)
-        async function exportRatings() { return exportData(); }
+        // Rating function (localStorage-based for static GitHub Pages)
+        function rateProperty(propertyId, rating, buttonElement) {
+            const card = buttonElement.closest('.property-card');
+            const buttons = card.querySelectorAll('.rating-btn');
+            const property = allProperties.find(p => p.id === propertyId);
+            const newRating = property?.user_rating === rating ? null : rating;
 
+            // Persist in localStorage
+            const saved = JSON.parse(localStorage.getItem('propertyRatings') || '{}');
+            if (newRating) { saved[String(propertyId)] = newRating; }
+            else { delete saved[String(propertyId)]; }
+            localStorage.setItem('propertyRatings', JSON.stringify(saved));
 
+            if (property) property.user_rating = newRating;
+            buttons.forEach(b => b.classList.remove('active-thumbs-up', 'active-thumbs-down'));
+            if (newRating === 'thumbs_up') buttonElement.classList.add('active-thumbs-up');
+            else if (newRating === 'thumbs_down') buttonElement.classList.add('active-thumbs-down');
+            performSearch();
+        }
         
         // Modal functions
         async function openPhotoModal(propertyId, itemNumber, address) {
