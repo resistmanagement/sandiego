@@ -138,7 +138,7 @@
             background: #d32f2f;
         }
 
-        .ratings-toolbar {
+        .data-toolbar {
             display: flex;
             gap: 10px;
             align-items: center;
@@ -148,15 +148,30 @@
             margin-top: 12px;
         }
 
-        .ratings-toolbar span {
+        .data-toolbar-section {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .data-toolbar-divider {
+            width: 1px;
+            height: 28px;
+            background: #ddd;
+            flex-shrink: 0;
+        }
+
+        .toolbar-label {
             font-size: 12px;
             font-weight: 600;
             color: #666;
             text-transform: uppercase;
+            white-space: nowrap;
         }
 
-        .ratings-btn {
-            padding: 8px 16px;
+        .toolbar-btn {
+            padding: 7px 14px;
             border: none;
             border-radius: 6px;
             font-size: 13px;
@@ -165,10 +180,44 @@
             transition: background 0.2s;
         }
 
-        .ratings-btn.export { background: #7E57C2; color: white; }
-        .ratings-btn.export:hover { background: #5E35B1; }
-        .ratings-btn.import { background: #26A69A; color: white; }
-        .ratings-btn.import:hover { background: #00897B; }
+        .toolbar-btn.export  { background: #7E57C2; color: white; }
+        .toolbar-btn.export:hover  { background: #5E35B1; }
+        .toolbar-btn.import  { background: #26A69A; color: white; }
+        .toolbar-btn.import:hover  { background: #00897B; }
+        .toolbar-btn.save-filter { background: #1976D2; color: white; }
+        .toolbar-btn.save-filter:hover { background: #1565C0; }
+        .toolbar-btn.delete-filter { background: #e53935; color: white; }
+        .toolbar-btn.delete-filter:hover { background: #b71c1c; }
+
+        .saved-filter-select {
+            padding: 7px 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            background: white;
+            cursor: pointer;
+            min-width: 160px;
+        }
+
+        .priority-select {
+            padding: 3px 6px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            background: #f8f8f8;
+            color: #888;
+            transition: border-color 0.15s, background 0.15s, color 0.15s;
+            appearance: none;
+            -webkit-appearance: none;
+            min-width: 90px;
+            text-align: center;
+        }
+        .priority-select:focus { outline: none; }
+        .priority-select.pri-high   { background: #FFCDD2; color: #B71C1C; border-color: #ef9a9a; }
+        .priority-select.pri-medium { background: #FFF9C4; color: #F57F17; border-color: #fff176; }
+        .priority-select.pri-low    { background: #E8F5E9; color: #2E7D32; border-color: #a5d6a7; }
         
         .active-filters {
             display: flex;
@@ -699,6 +748,17 @@
                         <option value="not_rated">⭕ Not Rated</option>
                     </select>
                 </div>
+
+                <div class="filter-group">
+                    <label class="filter-label" for="priority-filter">Priority</label>
+                    <select id="priority-filter">
+                        <option value="">All Priorities</option>
+                        <option value="High">🔴 High</option>
+                        <option value="Medium">🟡 Medium</option>
+                        <option value="Low">🟢 Low</option>
+                        <option value="not_set">⭕ Not Set</option>
+                    </select>
+                </div>
             </div>
             
             <div class="filter-row">
@@ -808,12 +868,25 @@
             
             <div class="active-filters" id="active-filters"></div>
 
-            <div class="ratings-toolbar">
-                <span>Ratings</span>
-                <button class="ratings-btn export" onclick="exportRatings()" title="Download your ratings as a JSON file">📤 Export Ratings</button>
-                <button class="ratings-btn import" onclick="document.getElementById('import-file').click()" title="Load ratings from a previously exported file">📥 Import Ratings</button>
-                <input type="file" id="import-file" accept=".json" style="display:none" onchange="importRatings(this.files[0]); this.value='';">
-                <span id="ratings-info" style="font-size:12px;color:#888;"></span>
+            <div class="data-toolbar" id="data-toolbar">
+                <!-- Ratings section -->
+                <span class="toolbar-label">Ratings &amp; Priority</span>
+                <div class="data-toolbar-section">
+                    <button class="toolbar-btn export" onclick="exportData()" title="Download your ratings, priorities and saved filters as a JSON file">📤 Export</button>
+                    <button class="toolbar-btn import" onclick="document.getElementById('import-file').click()" title="Load ratings, priorities and saved filters from a previously exported file">📥 Import</button>
+                    <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(this.files[0]); this.value='';">
+                    <span id="ratings-info" style="font-size:12px;color:#888;"></span>
+                </div>
+                <div class="data-toolbar-divider"></div>
+                <!-- Saved filters section -->
+                <span class="toolbar-label">Saved Filters</span>
+                <div class="data-toolbar-section">
+                    <select class="saved-filter-select" id="saved-filter-select" onchange="loadSavedFilter(this.value)">
+                        <option value="">Select a saved filter…</option>
+                    </select>
+                    <button class="toolbar-btn save-filter" onclick="saveCurrentFilter()" title="Save current filter settings with a name">💾 Save Current</button>
+                    <button class="toolbar-btn delete-filter" onclick="deleteSavedFilter()" title="Delete the selected saved filter">🗑 Delete</button>
+                </div>
             </div>
         </div>
         
@@ -864,6 +937,9 @@
                 
                 // Populate filter dropdowns
                 populateFilterDropdowns();
+                
+                // Populate saved filters dropdown
+                populateSavedFilterDropdown();
                 
                 // Restore saved filters from localStorage
                 restoreFilters();
@@ -960,6 +1036,14 @@
                                 <span class="property-status ${statusClass}">${prop.status || 'Unknown'}</span>
                             </div>
                             <div class="header-right">
+                                <select class="priority-select ${prop.user_priority === 'High' ? 'pri-high' : prop.user_priority === 'Medium' ? 'pri-medium' : prop.user_priority === 'Low' ? 'pri-low' : ''}"
+                                        onchange="setPriority(${prop.id}, this)"
+                                        title="Set priority">
+                                    <option value="">— Priority</option>
+                                    <option value="High"   ${prop.user_priority === 'High'   ? 'selected' : ''}>🔴 High</option>
+                                    <option value="Medium" ${prop.user_priority === 'Medium' ? 'selected' : ''}>🟡 Medium</option>
+                                    <option value="Low"    ${prop.user_priority === 'Low'    ? 'selected' : ''}>🟢 Low</option>
+                                </select>
                                 <button class="rating-btn ${prop.user_rating === 'thumbs_up' ? 'active-thumbs-up' : ''}"
                                         onclick="rateProperty(${prop.id}, 'thumbs_up', this)"
                                         title="Thumbs up">
@@ -1122,6 +1206,15 @@
                     filtered = filtered.filter(prop => prop.user_rating === filters.rating);
                 }
             }
+
+            // Apply priority filter
+            if (filters.priority) {
+                if (filters.priority === 'not_set') {
+                    filtered = filtered.filter(prop => !prop.user_priority || prop.user_priority === '');
+                } else {
+                    filtered = filtered.filter(prop => prop.user_priority === filters.priority);
+                }
+            }
             
             // Apply price range filters
             if (filters.minBid) {
@@ -1266,6 +1359,7 @@
                 redfinType: document.getElementById('redfin-type-filter').value,
                 cities: selectedCities,
                 rating: document.getElementById('rating-filter').value,
+                priority: document.getElementById('priority-filter').value,
                 minBid: parseFloat(document.getElementById('min-bid').value) || null,
                 maxBid: parseFloat(document.getElementById('max-bid').value) || null,
                 minAssessed: parseFloat(document.getElementById('min-assessed').value) || null,
@@ -1306,6 +1400,15 @@
                     'not_rated': '⭕ Not Rated'
                 };
                 filterDisplay.push(['Rating', ratingLabels[filters.rating], 'rating-filter']);
+            }
+            if (filters.priority) {
+                const priorityLabels = {
+                    'High': '🔴 High',
+                    'Medium': '🟡 Medium',
+                    'Low': '🟢 Low',
+                    'not_set': '⭕ Not Set'
+                };
+                filterDisplay.push(['Priority', priorityLabels[filters.priority], 'priority-filter']);
             }
             if (filters.minBid) filterDisplay.push(['Min Bid', '$' + filters.minBid.toLocaleString(), 'min-bid']);
             if (filters.maxBid) filterDisplay.push(['Max Bid', '$' + filters.maxBid.toLocaleString(), 'max-bid']);
@@ -1355,6 +1458,7 @@
             document.getElementById('property-type-filter').selectedIndex = 0;
             document.getElementById('redfin-type-filter').selectedIndex = 0;
             document.getElementById('rating-filter').selectedIndex = 0;
+            document.getElementById('priority-filter').selectedIndex = 0;
             
             // Clear multi-select city filter
             const cityFilter = document.getElementById('city-filter');
@@ -1392,6 +1496,7 @@
                 redfinType: document.getElementById('redfin-type-filter').value,
                 cities: Array.from(document.getElementById('city-filter').selectedOptions).map(opt => opt.value),
                 rating: document.getElementById('rating-filter').value,
+                priority: document.getElementById('priority-filter').value,
                 minBid: document.getElementById('min-bid').value,
                 maxBid: document.getElementById('max-bid').value,
                 minAssessed: document.getElementById('min-assessed').value,
@@ -1425,6 +1530,7 @@
                 if (filters.propertyType) document.getElementById('property-type-filter').value = filters.propertyType;
                 if (filters.redfinType) document.getElementById('redfin-type-filter').value = filters.redfinType;
                 if (filters.rating) document.getElementById('rating-filter').value = filters.rating;
+                if (filters.priority) document.getElementById('priority-filter').value = filters.priority;
                 
                 // Restore multi-select cities (after dropdown is populated)
                 if (filters.cities && filters.cities.length > 0) {
@@ -1464,6 +1570,7 @@
         document.getElementById('redfin-type-filter').addEventListener('change', performSearch);
         document.getElementById('city-filter').addEventListener('change', performSearch);
         document.getElementById('rating-filter').addEventListener('change', performSearch);
+        document.getElementById('priority-filter').addEventListener('change', performSearch);
         document.getElementById('min-bid').addEventListener('input', performSearch);
         document.getElementById('max-bid').addEventListener('input', performSearch);
         document.getElementById('min-assessed').addEventListener('input', performSearch);
@@ -1490,38 +1597,186 @@
             a.click();
         }
 
-        // Export ratings (Flask: reads from DB via /api/ratings)
-        async function exportRatings() {
-            const response = await fetch('/api/ratings');
-            const ratings = await response.json();
-            const count = Object.keys(ratings).length;
-            if (count === 0) { alert('No ratings to export.'); return; }
-            downloadJSON(ratings, 'my-ratings.json');
-            document.getElementById('ratings-info').textContent = `Exported ${count} rating${count !== 1 ? 's' : ''}`;
+        // ── Priority ──────────────────────────────────────────────────────────
+        async function setPriority(propertyId, selectElement) {
+            const priority = selectElement.value || null;
+
+            try {
+                const response = await fetch(`/api/property/${propertyId}/priority`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ priority })
+                });
+                if (!response.ok) { alert('Failed to update priority'); return; }
+            } catch (e) {
+                alert('Error updating priority: ' + e.message);
+                return;
+            }
+
+            const property = allProperties.find(p => p.id === propertyId);
+            if (property) property.user_priority = priority;
+            selectElement.className = 'priority-select' + (priority === 'High' ? ' pri-high' : priority === 'Medium' ? ' pri-medium' : priority === 'Low' ? ' pri-low' : '');
+            performSearch();
         }
 
-        // Import ratings (Flask: writes to DB via /api/ratings POST)
-        async function importRatings(file) {
+        // ── Export / Import (ratings + priorities + saved filters) ────────────
+        async function exportData() {
+            const resp = await fetch('/api/ratings');
+            const ratingsData = await resp.json();  // {id: {rating, priority}}
+            const ratings = {};
+            const priorities = {};
+            Object.entries(ratingsData).forEach(([id, val]) => {
+                if (val.rating) ratings[id] = val.rating;
+                if (val.priority) priorities[id] = val.priority;
+            });
+            const savedFilters = JSON.parse(localStorage.getItem('propertySavedFilters') || '{}');
+            const data = { ratings, priorities, savedFilters };
+            const rCount = Object.keys(ratings).length;
+            const pCount = Object.keys(priorities).length;
+            if (rCount === 0 && pCount === 0) { alert('No ratings or priorities to export.'); return; }
+            const ts = new Date().toISOString().slice(0,19).replace(/:/g,'-');
+            downloadJSON(data, `my-ratings-${ts}.json`);
+            document.getElementById('ratings-info').textContent = `Exported ${rCount} rating${rCount !== 1 ? 's' : ''}, ${pCount} priorit${pCount !== 1 ? 'ies' : 'y'}`;
+        }
+
+        async function importData(file) {
             if (!file) return;
             try {
-                const ratings = JSON.parse(await file.text());
+                const data = JSON.parse(await file.text());
+                // Support old format (flat {id: rating}) and new format ({ratings, priorities, savedFilters})
+                const ratings = data.ratings || (typeof data === 'object' && !data.savedFilters ? data : {});
+                const priorities = data.priorities || {};
+                const savedFilters = data.savedFilters || {};
+
+                const payload = {};
+                const allIds = new Set([...Object.keys(ratings), ...Object.keys(priorities)]);
+                allIds.forEach(id => {
+                    payload[id] = { rating: ratings[id] || null, priority: priorities[id] || null };
+                });
+
                 const response = await fetch('/api/ratings', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(ratings)
+                    body: JSON.stringify(payload)
                 });
                 const result = await response.json();
-                const count = result.imported || 0;
+
+                // Merge saved filters
+                if (Object.keys(savedFilters).length > 0) {
+                    const existing = JSON.parse(localStorage.getItem('propertySavedFilters') || '{}');
+                    Object.assign(existing, savedFilters);
+                    localStorage.setItem('propertySavedFilters', JSON.stringify(existing));
+                    populateSavedFilterDropdown();
+                }
+
                 // Update in-memory data
                 allProperties.forEach(p => {
-                    if (ratings[String(p.id)]) p.user_rating = ratings[String(p.id)];
+                    const id = String(p.id);
+                    if (ratings[id]) p.user_rating = ratings[id];
+                    if (priorities[id]) p.user_priority = priorities[id];
                 });
-                document.getElementById('ratings-info').textContent = `Imported ${count} rating${count !== 1 ? 's' : ''}`;
+
+                const rCount = Object.keys(ratings).length;
+                const pCount = Object.keys(priorities).length;
+                document.getElementById('ratings-info').textContent = `Imported ${rCount} rating${rCount !== 1 ? 's' : ''}, ${pCount} priorit${pCount !== 1 ? 'ies' : 'y'}`;
                 performSearch();
             } catch (e) {
                 alert('Import failed: ' + e.message);
             }
         }
+
+        // ── Saved Filters ─────────────────────────────────────────────────────
+        function populateSavedFilterDropdown() {
+            const select = document.getElementById('saved-filter-select');
+            const saved = JSON.parse(localStorage.getItem('propertySavedFilters') || '{}');
+            const names = Object.keys(saved).sort();
+            // Preserve current selection
+            const prev = select.value;
+            select.innerHTML = '<option value="">Select a saved filter…</option>';
+            names.forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.textContent = name;
+                select.appendChild(opt);
+            });
+            if (prev && saved[prev]) select.value = prev;
+        }
+
+        function saveCurrentFilter() {
+            const name = prompt('Enter a name for this filter preset:');
+            if (!name || !name.trim()) return;
+            const trimmed = name.trim();
+            const filters = {
+                searchTerm: document.getElementById('search-input').value,
+                status: document.getElementById('status-filter').value,
+                propertyType: document.getElementById('property-type-filter').value,
+                redfinType: document.getElementById('redfin-type-filter').value,
+                cities: Array.from(document.getElementById('city-filter').selectedOptions).map(opt => opt.value),
+                rating: document.getElementById('rating-filter').value,
+                priority: document.getElementById('priority-filter').value,
+                minBid: document.getElementById('min-bid').value,
+                maxBid: document.getElementById('max-bid').value,
+                minAssessed: document.getElementById('min-assessed').value,
+                maxAssessed: document.getElementById('max-assessed').value,
+                minSqft: document.getElementById('min-sqft').value,
+                maxSqft: document.getElementById('max-sqft').value,
+                minYear: document.getElementById('min-year').value,
+                maxYear: document.getElementById('max-year').value,
+                minRedfin: document.getElementById('min-redfin').value,
+                maxRedfin: document.getElementById('max-redfin').value,
+                minRatio: document.getElementById('min-ratio').value,
+                maxRatio: document.getElementById('max-ratio').value,
+                minAcres: document.getElementById('min-acres').value,
+                maxAcres: document.getElementById('max-acres').value,
+                minBeds: document.getElementById('min-beds').value,
+                minBaths: document.getElementById('min-baths').value
+            };
+            const saved = JSON.parse(localStorage.getItem('propertySavedFilters') || '{}');
+            saved[trimmed] = filters;
+            localStorage.setItem('propertySavedFilters', JSON.stringify(saved));
+            populateSavedFilterDropdown();
+            document.getElementById('saved-filter-select').value = trimmed;
+            document.getElementById('ratings-info').textContent = `Saved filter "${trimmed}"`;
+        }
+
+        function loadSavedFilter(name) {
+            if (!name) return;
+            const saved = JSON.parse(localStorage.getItem('propertySavedFilters') || '{}');
+            const filters = saved[name];
+            if (!filters) return;
+
+            if (filters.searchTerm !== undefined) document.getElementById('search-input').value = filters.searchTerm;
+            if (filters.status !== undefined) document.getElementById('status-filter').value = filters.status;
+            if (filters.propertyType !== undefined) document.getElementById('property-type-filter').value = filters.propertyType;
+            if (filters.redfinType !== undefined) document.getElementById('redfin-type-filter').value = filters.redfinType;
+            if (filters.rating !== undefined) document.getElementById('rating-filter').value = filters.rating;
+            if (filters.priority !== undefined) document.getElementById('priority-filter').value = filters.priority;
+            if (filters.cities && filters.cities.length > 0) {
+                const cityFilter = document.getElementById('city-filter');
+                Array.from(cityFilter.options).forEach(opt => { opt.selected = filters.cities.includes(opt.value); });
+            }
+            const numFields = ['minBid','maxBid','minAssessed','maxAssessed','minSqft','maxSqft','minYear','maxYear','minRedfin','maxRedfin','minRatio','maxRatio','minAcres','maxAcres','minBeds','minBaths'];
+            const idMap = {minBid:'min-bid',maxBid:'max-bid',minAssessed:'min-assessed',maxAssessed:'max-assessed',minSqft:'min-sqft',maxSqft:'max-sqft',minYear:'min-year',maxYear:'max-year',minRedfin:'min-redfin',maxRedfin:'max-redfin',minRatio:'min-ratio',maxRatio:'max-ratio',minAcres:'min-acres',maxAcres:'max-acres',minBeds:'min-beds',minBaths:'min-baths'};
+            numFields.forEach(k => { if (filters[k] !== undefined) document.getElementById(idMap[k]).value = filters[k]; });
+            performSearch();
+        }
+
+        function deleteSavedFilter() {
+            const select = document.getElementById('saved-filter-select');
+            const name = select.value;
+            if (!name) { alert('Select a saved filter to delete.'); return; }
+            if (!confirm(`Delete saved filter "${name}"?`)) return;
+            const saved = JSON.parse(localStorage.getItem('propertySavedFilters') || '{}');
+            delete saved[name];
+            localStorage.setItem('propertySavedFilters', JSON.stringify(saved));
+            populateSavedFilterDropdown();
+        }
+
+        // Export ratings (Flask: reads from DB via /api/ratings)
+        async function exportRatings() { return exportData(); }
+
+        // Import ratings (Flask: writes to DB via /api/ratings POST)
+        async function importRatings(file) { return importData(file); }
 
         // Rating function
         async function rateProperty(propertyId, rating, buttonElement) {

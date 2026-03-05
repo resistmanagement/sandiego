@@ -208,21 +208,25 @@ def serve_photo(filename):
 
 @app.route('/api/ratings')
 def get_ratings():
-    """Export all user ratings as {id: rating} JSON."""
+    """Export all user ratings and priorities as {id: {rating, priority}} JSON."""
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute(
-        "SELECT id, user_rating FROM auction_properties WHERE user_rating IS NOT NULL"
+        "SELECT id, user_rating, user_priority FROM auction_properties "
+        "WHERE user_rating IS NOT NULL OR user_priority IS NOT NULL"
     )
-    ratings = {str(row['id']): row['user_rating'] for row in cur.fetchall()}
+    result = {
+        str(row['id']): {'rating': row['user_rating'], 'priority': row['user_priority']}
+        for row in cur.fetchall()
+    }
     cur.close()
     conn.close()
-    return jsonify(ratings)
+    return jsonify(result)
 
 
 @app.route('/api/ratings', methods=['POST'])
 def import_ratings():
-    """Bulk-import ratings from {id: rating} JSON."""
+    """Bulk-import ratings and priorities from {id: {rating, priority}} or {id: rating} JSON."""
     try:
         data = request.get_json()
         if not isinstance(data, dict):
@@ -230,18 +234,57 @@ def import_ratings():
         conn = get_db_connection()
         cur = conn.cursor()
         count = 0
-        for prop_id, rating in data.items():
-            if rating not in ('thumbs_up', 'thumbs_down', None):
+        for prop_id, val in data.items():
+            # Support both old flat format {id: "thumbs_up"} and new {id: {rating, priority}}
+            if isinstance(val, str):
+                rating = val if val in ('thumbs_up', 'thumbs_down') else None
+                priority = None
+            elif isinstance(val, dict):
+                rating = val.get('rating')
+                priority = val.get('priority')
+                if rating not in ('thumbs_up', 'thumbs_down', None):
+                    rating = None
+                if priority not in ('High', 'Medium', 'Low', None):
+                    priority = None
+            else:
                 continue
             cur.execute(
-                "UPDATE auction_properties SET user_rating = %s WHERE id = %s",
-                (rating, int(prop_id)),
+                "UPDATE auction_properties SET user_rating = COALESCE(%s, user_rating), "
+                "user_priority = COALESCE(%s, user_priority) WHERE id = %s",
+                (rating, priority, int(prop_id)),
             )
             count += cur.rowcount
         conn.commit()
         cur.close()
         conn.close()
         return jsonify({'imported': count})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/property/<int:property_id>/priority', methods=['POST'])
+def update_priority(property_id):
+    """Update the priority for a property"""
+    try:
+        data = request.get_json()
+        priority = data.get('priority')  # 'High', 'Medium', 'Low', or None to clear
+        
+        if priority not in ['High', 'Medium', 'Low', None]:
+            return jsonify({'error': 'Invalid priority value'}), 400
+        
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        cur.execute(
+            "UPDATE auction_properties SET user_priority = %s WHERE id = %s",
+            (priority, property_id)
+        )
+        conn.commit()
+        
+        cur.close()
+        conn.close()
+        
+        return jsonify({'success': True, 'priority': priority})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

@@ -57,8 +57,9 @@ def export_json():
     properties = []
     for row in rows:
         prop = {k: serialize_value(v) for k, v in row.items()}
-        # user_rating is handled client-side via localStorage
+        # user_rating and user_priority are handled client-side via localStorage
         prop.pop("user_rating", None)
+        prop.pop("user_priority", None)
         properties.append(prop)
 
     out = os.path.join(DATA_DIR, "properties.json")
@@ -70,34 +71,66 @@ def export_json():
 
 
 LOCALSTORAGE_EXPORT_FN = """\
-        // Export ratings (static: reads from localStorage)
-        function exportRatings() {
+        // Export data (static: reads from localStorage)
+        function exportData() {
             const ratings = JSON.parse(localStorage.getItem('propertyRatings') || '{}');
-            const count = Object.keys(ratings).length;
-            if (count === 0) { alert('No ratings to export.'); return; }
-            downloadJSON(ratings, 'my-ratings.json');
-            document.getElementById('ratings-info').textContent = `Exported ${count} rating${count !== 1 ? 's' : ''}`;
-        }"""
+            const priorities = JSON.parse(localStorage.getItem('propertyPriorities') || '{}');
+            const savedFilters = JSON.parse(localStorage.getItem('propertySavedFilters') || '{}');
+            const rCount = Object.keys(ratings).length;
+            const pCount = Object.keys(priorities).length;
+            if (rCount === 0 && pCount === 0) { alert('No ratings or priorities to export.'); return; }
+            const ts = new Date().toISOString().slice(0,19).replace(/:/g,'-');
+            downloadJSON({ ratings, priorities, savedFilters }, `my-ratings-${ts}.json`);
+            document.getElementById('ratings-info').textContent = `Exported ${rCount} rating${rCount !== 1 ? 's' : ''}, ${pCount} priorit${pCount !== 1 ? 'ies' : 'y'}`;
+        }
+
+        // Shim for old exportRatings calls
+        function exportRatings() { return exportData(); }"""
 
 LOCALSTORAGE_IMPORT_FN = """\
-        // Import ratings (static: writes to localStorage)
-        async function importRatings(file) {
+        // Import data (static: writes to localStorage)
+        async function importData(file) {
             if (!file) return;
             try {
-                const ratings = JSON.parse(await file.text());
-                const saved = JSON.parse(localStorage.getItem('propertyRatings') || '{}');
-                Object.assign(saved, ratings);
-                localStorage.setItem('propertyRatings', JSON.stringify(saved));
+                const data = JSON.parse(await file.text());
+                const ratings = data.ratings || (typeof data === 'object' && !data.savedFilters ? data : {});
+                const priorities = data.priorities || {};
+                const savedFilters = data.savedFilters || {};
+
+                // Merge ratings
+                const savedR = JSON.parse(localStorage.getItem('propertyRatings') || '{}');
+                Object.assign(savedR, ratings);
+                localStorage.setItem('propertyRatings', JSON.stringify(savedR));
+
+                // Merge priorities
+                const savedP = JSON.parse(localStorage.getItem('propertyPriorities') || '{}');
+                Object.assign(savedP, priorities);
+                localStorage.setItem('propertyPriorities', JSON.stringify(savedP));
+
+                // Merge saved filters
+                if (Object.keys(savedFilters).length > 0) {
+                    const existing = JSON.parse(localStorage.getItem('propertySavedFilters') || '{}');
+                    Object.assign(existing, savedFilters);
+                    localStorage.setItem('propertySavedFilters', JSON.stringify(existing));
+                    populateSavedFilterDropdown();
+                }
+
                 allProperties.forEach(p => {
-                    if (saved[String(p.id)]) p.user_rating = saved[String(p.id)];
+                    const id = String(p.id);
+                    if (savedR[id]) p.user_rating = savedR[id];
+                    if (savedP[id]) p.user_priority = savedP[id];
                 });
-                const count = Object.keys(ratings).length;
-                document.getElementById('ratings-info').textContent = `Imported ${count} rating${count !== 1 ? 's' : ''}`;
+                const rCount = Object.keys(ratings).length;
+                const pCount = Object.keys(priorities).length;
+                document.getElementById('ratings-info').textContent = `Imported ${rCount} rating${rCount !== 1 ? 's' : ''}, ${pCount} priorit${pCount !== 1 ? 'ies' : 'y'}`;
                 performSearch();
             } catch (e) {
                 alert('Import failed: ' + e.message);
             }
-        }"""
+        }
+
+        // Shim for old importRatings calls
+        async function importRatings(file) { return importData(file); }"""
 
 LOCALSTORAGE_RATE_FN = """\
         // Rating function (localStorage-based for static GitHub Pages)
@@ -120,6 +153,22 @@ LOCALSTORAGE_RATE_FN = """\
             performSearch();
         }"""
 
+LOCALSTORAGE_PRIORITY_FN = """\
+        // Priority select function (localStorage-based for static GitHub Pages)
+        function setPriority(propertyId, selectElement) {
+            const priority = selectElement.value || null;
+
+            const saved = JSON.parse(localStorage.getItem('propertyPriorities') || '{}');
+            if (priority) { saved[String(propertyId)] = priority; }
+            else { delete saved[String(propertyId)]; }
+            localStorage.setItem('propertyPriorities', JSON.stringify(saved));
+
+            const property = allProperties.find(p => p.id === propertyId);
+            if (property) property.user_priority = priority;
+            selectElement.className = 'priority-select' + (priority === 'High' ? ' pri-high' : priority === 'Medium' ? ' pri-medium' : priority === 'Low' ? ' pri-low' : '');
+            performSearch();
+        }"""
+
 
 def build_html():
     """Generate docs/index.html from templates/index.html with static modifications."""
@@ -135,14 +184,18 @@ def build_html():
     )
 
     # ------------------------------------------------------------------ #
-    # 2. After loading JSON, restore ratings from localStorage            #
+    # 2. After loading JSON, restore ratings AND priorities from localStorage
     # ------------------------------------------------------------------ #
     html = html.replace(
         "allProperties = await response.json();",
         "allProperties = await response.json();\n"
-        "                // Restore ratings from localStorage\n"
+        "                // Restore ratings and priorities from localStorage\n"
         "                const _savedRatings = JSON.parse(localStorage.getItem('propertyRatings') || '{}');\n"
-        "                allProperties.forEach(p => { p.user_rating = _savedRatings[String(p.id)] || null; });",
+        "                const _savedPriorities = JSON.parse(localStorage.getItem('propertyPriorities') || '{}');\n"
+        "                allProperties.forEach(p => {\n"
+        "                    p.user_rating = _savedRatings[String(p.id)] || null;\n"
+        "                    p.user_priority = _savedPriorities[String(p.id)] || null;\n"
+        "                });",
     )
 
     # ------------------------------------------------------------------ #
@@ -156,21 +209,44 @@ def build_html():
     )
 
     # ------------------------------------------------------------------ #
-    # 3b. Replace exportRatings with localStorage version                 #
+    # 3b. Replace setPriority with localStorage version                   #
     # ------------------------------------------------------------------ #
     html = re.sub(
-        r"        // Export ratings \(Flask:.*?\n        async function exportRatings\(\).*?\n        \}",
+        r"        // ── Priority ─+\n        async function setPriority.*?(?=\n[ \t]*\n        // ── Export)",
+        LOCALSTORAGE_PRIORITY_FN,
+        html,
+        flags=re.DOTALL,
+    )
+
+    # ------------------------------------------------------------------ #
+    # 3c. Replace exportData/exportRatings with localStorage version      #
+    # ------------------------------------------------------------------ #
+    html = re.sub(
+        r"        // ── Export / Import.*?(?=\n[ \t]*\n        // ── Saved Filters)",
         LOCALSTORAGE_EXPORT_FN,
         html,
         flags=re.DOTALL,
     )
 
     # ------------------------------------------------------------------ #
-    # 3c. Replace importRatings with localStorage version                 #
+    # 3d. Replace importData/importRatings with localStorage version      #
+    # ------------------------------------------------------------------ #
+    # Already included in LOCALSTORAGE_EXPORT_FN block above (export+import together)
+    # Remove the separate import block if still present
+    html = re.sub(
+        r"        // Import ratings \(Flask:.*?async function importRatings\(file\).*?\n        \}",
+        "",
+        html,
+        flags=re.DOTALL,
+    )
+
+    # ------------------------------------------------------------------ #
+    # 3e. Replace importData (Flask version) with shim note               #
+    # (importData is emitted by LOCALSTORAGE_EXPORT_FN block)             #
     # ------------------------------------------------------------------ #
     html = re.sub(
-        r"        // Import ratings \(Flask:.*?\n        async function importRatings\(file\).*?\n        \}",
-        LOCALSTORAGE_IMPORT_FN,
+        r"        // ── Export / Import .*?\n        async function importData\(file\).*?\n        \}(?=\n[ \t]*\n        // ── Saved Filters)",
+        LOCALSTORAGE_EXPORT_FN,
         html,
         flags=re.DOTALL,
     )
