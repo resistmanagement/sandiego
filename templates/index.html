@@ -1772,12 +1772,6 @@
             populateSavedFilterDropdown();
         }
 
-        // Export ratings (Flask: reads from DB via /api/ratings)
-        async function exportRatings() { return exportData(); }
-
-        // Import ratings (Flask: writes to DB via /api/ratings POST)
-        async function importRatings(file) { return importData(file); }
-
         // Rating function
         async function rateProperty(propertyId, rating, buttonElement) {
             const card = buttonElement.closest('.property-card');

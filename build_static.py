@@ -219,34 +219,11 @@ def build_html():
     )
 
     # ------------------------------------------------------------------ #
-    # 3c. Replace exportData/exportRatings with localStorage version      #
+    # 3c. Replace exportData + importData with localStorage versions      #
     # ------------------------------------------------------------------ #
     html = re.sub(
         r"        // ── Export / Import.*?(?=\n[ \t]*\n        // ── Saved Filters)",
-        LOCALSTORAGE_EXPORT_FN,
-        html,
-        flags=re.DOTALL,
-    )
-
-    # ------------------------------------------------------------------ #
-    # 3d. Replace importData/importRatings with localStorage version      #
-    # ------------------------------------------------------------------ #
-    # Already included in LOCALSTORAGE_EXPORT_FN block above (export+import together)
-    # Remove the separate import block if still present
-    html = re.sub(
-        r"        // Import ratings \(Flask:.*?async function importRatings\(file\).*?\n        \}",
-        "",
-        html,
-        flags=re.DOTALL,
-    )
-
-    # ------------------------------------------------------------------ #
-    # 3e. Replace importData (Flask version) with shim note               #
-    # (importData is emitted by LOCALSTORAGE_EXPORT_FN block)             #
-    # ------------------------------------------------------------------ #
-    html = re.sub(
-        r"        // ── Export / Import .*?\n        async function importData\(file\).*?\n        \}(?=\n[ \t]*\n        // ── Saved Filters)",
-        LOCALSTORAGE_EXPORT_FN,
+        LOCALSTORAGE_EXPORT_FN + "\n\n" + LOCALSTORAGE_IMPORT_FN,
         html,
         flags=re.DOTALL,
     )
