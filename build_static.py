@@ -16,7 +16,7 @@ from psycopg2.extras import RealDictCursor
 from datetime import datetime, date
 from decimal import Decimal
 
-DB_URL = "postgresql://localhost:5432/sandiego_auction"
+DB_URL = os.environ.get("DB_URL", "postgresql://localhost:5432/sandiego_auction")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DOCS_DIR = os.path.join(BASE_DIR, "docs")
 DATA_DIR = os.path.join(DOCS_DIR, "data")

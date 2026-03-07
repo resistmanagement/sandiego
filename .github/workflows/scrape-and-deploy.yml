@@ -1,0 +1,75 @@
+name: Scrape & Deploy
+
+on:
+  workflow_dispatch:   # Manual trigger from the GitHub UI / API
+  schedule:
+    - cron: '0 15 * * *'   # Also runs daily at 15:00 UTC (8 AM PDT)
+
+jobs:
+  scrape-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # Required to push the docs/ changes back
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: sandiego_auction
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    env:
+      DB_URL: postgresql://postgres:postgres@localhost:5432/sandiego_auction
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Use a PAT (or the default token) so the push in the last step works
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Playwright browsers
+        run: python -m playwright install --with-deps chromium
+        # Only needed if scraper.py uses playwright; harmless if it doesn't
+
+      - name: Initialise database schema
+        run: psql -f schema.sql
+        env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: sandiego_auction
+
+      - name: Run scraper
+        run: python scraper.py --db-url "$DB_URL"
+
+      - name: Build static site
+        run: python build_static.py
+        # build_static.py reads DB_URL from the environment (set above)
+
+      - name: Commit and push docs/
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/
+          git diff --cached --quiet \
+            || git commit -m "Deploy: update static site data ($(date -u '+%Y-%m-%d %H:%M UTC'))"
+          git push
